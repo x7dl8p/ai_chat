@@ -9,8 +9,10 @@ import { Tabs, type Tab } from "@/components/tabs/tabs"
 import { Message, type Message as MessageType } from "@/components/chat/message"
 import { ChatInput } from "@/components/chat/chat-input"
 import { translateToArabic } from "@/lib/utils"
+import { generateGeminiResponse } from "@/lib/gemini"
 
-type ActiveButton = "none" | "file" | "translate" | "think"
+// Available modes for chat interaction
+import { ActiveButton } from "./types";
 
 // Sample chat history data
 const SAMPLE_CHAT_HISTORY: ChatHistory[] = [
@@ -199,27 +201,45 @@ export default function ChatInterface() {
       })
     }
 
-    // Simulate API delay
-    await new Promise((resolve) => setTimeout(resolve, 1000))
-
     // Generate response based on mode
-    let response = ""
-    let thoughtProcess = ""
+    let response = "";
+    let thoughtProcess = "";
 
-    if (isSimpleGreeting(message)) {
-      response = "Greetings, nice to meet you, what can I help you with?"
-    } else if (mode === "translate") {
-      response = translateToArabic(message)
-    } else if (mode === "think") {
-      thoughtProcess = `Step 1: Analyzing the query "${message}"\n\nStep 2: Considering different perspectives\n- Perspective A: This could be interpreted as...\n- Perspective B: Alternatively, this might mean...\n\nStep 3: Evaluating the most likely interpretation\nBased on context, perspective A seems more likely because...\n\nStep 4: Formulating a comprehensive response that addresses the core question while providing relevant context.`
-
-      response = "After careful consideration, here's my response to your query."
-    } else {
-      response = "Here's my response to your question."
+    try {
+      if (isSimpleGreeting(message)) {
+        response = "Greetings, nice to meet you, what can I help you with?";
+      } else if (mode === "translate") {
+        // Here we could enhance this to use Gemini's translation capabilities
+        // For now we'll keep the existing translation function
+        response = translateToArabic(message);
+      } else if (mode === "think") {
+        // For the "thinking" mode, we'll use Gemini but ask it to think step by step
+        const thinkingPrompt = `Think through this step by step and provide a detailed analysis: ${message}`;
+        thoughtProcess = await generateGeminiResponse({
+          model: "gemini-1.5-pro",
+          prompt: thinkingPrompt,
+          thinking: true
+        });
+        
+        // Then get a more concise answer
+        response = await generateGeminiResponse({
+          model: "gemini-1.5-pro",
+          prompt: `Provide a concise answer to: ${message}`,
+        });
+      } else {
+        // Normal mode - just get a direct response from Gemini
+        response = await generateGeminiResponse({
+          model: "gemini-1.5-flash", 
+          prompt: message
+        });
+      }
+    } catch (error) {
+      console.error("Error generating response:", error);
+      response = "Sorry, I encountered an error while generating a response. Please try again later.";
     }
 
     // Stream the response
-    await simulateTextStreaming(response)
+    await simulateTextStreaming(response);
 
     // Update the system message with the full response
     setMessages((prev) =>
@@ -233,7 +253,7 @@ export default function ChatInterface() {
             }
           : msg,
       ),
-    )
+    );
   }
 
   return (

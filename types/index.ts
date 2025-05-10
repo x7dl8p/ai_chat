@@ -25,3 +25,5 @@ export interface SelectedFile {
   name: string
   type: string
 }
+
+export type ActiveButton = "none" | "file" | "translate" | "think" | "default";

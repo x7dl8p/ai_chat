@@ -6,7 +6,7 @@ import { useState, useRef } from "react"
 import { ArrowUp, Languages, Lightbulb, Paperclip } from "lucide-react"
 import { cn } from "@/lib/utils"
 
-type ActiveButton = "none" | "file" | "translate" | "think"
+import { ActiveButton } from "../../types";
 
 interface ChatInputProps {
   onSendMessage: (message: string, mode: ActiveButton) => void
