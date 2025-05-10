@@ -7,7 +7,7 @@ import { ThemeProvider } from "@/components/theme-provider"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "Ai Chat",
+  title: "Shat Bot",
   description: "A minimal chat interface with Gemini AI",
 }
 

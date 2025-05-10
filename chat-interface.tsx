@@ -10,6 +10,7 @@ import { Message } from "@/components/chat/message"
 import { ChatInput } from "@/components/chat/chat-input"
 import { translateToArabic } from "@/lib/utils"
 import { generateGeminiResponse } from "@/lib/gemini"
+import { useIsMobile } from "@/hooks/use-mobile"
 
 // Available modes for chat interaction
 import { ActiveButton } from "./types";
@@ -41,8 +42,14 @@ const WORD_DELAY = 40 // ms per word
 const CHUNK_SIZE = 2 // Number of words to add at once
 
 export default function ChatInterface() {
-  // State for sidebar
-  const [sidebarVisible, setSidebarVisible] = useState(true)
+  const isMobile = useIsMobile()
+  // State for sidebar - hidden by default on mobile
+  const [sidebarVisible, setSidebarVisible] = useState(!isMobile)
+
+  // Update sidebar visibility when screen size changes
+  useEffect(() => {
+    setSidebarVisible(!isMobile)
+  }, [isMobile])
 
   // State for tabs - using ChatTab type with messages array
   const [tabs, setTabs] = useState<ChatTab[]>([{ 
@@ -264,7 +271,7 @@ export default function ChatInterface() {
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-white dark:bg-zinc-950 transition-colors">
+    <div className="flex min-h-screen max-h-[100dvh] overflow-hidden bg-white dark:bg-zinc-950 transition-colors">
       {/* Sidebar */}
       {sidebarVisible && <Sidebar onSelectChat={handleSelectChat} onNewChat={handleNewTab} />}
 
@@ -277,24 +284,33 @@ export default function ChatInterface() {
         <Tabs tabs={tabs} onNewTab={handleNewTab} onCloseTab={handleCloseTab} onSelectTab={handleSelectTab} />
 
         {/* Chat Area */}
-        <div ref={chatContainerRef} className="flex-1 overflow-y-auto p-4 scrollbar-hide bg-white dark:bg-zinc-950">
-          <div className="max-w-3xl mx-auto space-y-4">
-            {activeMessages.map((message, index) => (
-              <Message
-                key={message.id}
-                message={message}
-                isStreaming={isStreaming && index === activeMessages.length - 1}
-                isWaiting={isWaiting && index === activeMessages.length - 1}
-                streamingContent={streamingContent}
-              />
-            ))}
+        <div ref={chatContainerRef} className="flex-1 overflow-y-auto p-4 pb-24 sm:pb-4 scrollbar-hide bg-white dark:bg-zinc-950">
+          <div className="max-w-3xl mx-auto space-y-6">
+            {activeMessages.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-full mt-16 text-center text-zinc-500">
+                <h1 className="text-3xl font-bold text-zinc-800 dark:text-zinc-200">ShatBot</h1>
+                <p>Say something to begin...</p>
+              </div>
+            ) : (
+              activeMessages.map((message, index) => (
+                <Message
+                  key={message.id}
+                  message={message}
+                  isStreaming={isStreaming && index === activeMessages.length - 1}
+                  isWaiting={isWaiting && index === activeMessages.length - 1}
+                  streamingContent={streamingContent}
+                />
+              ))
+            )}
             <div ref={messagesEndRef} />
           </div>
         </div>
 
         {/* Input Area */}
-        <div className="p-4 border-t border-zinc-200 dark:border-zinc-800 transition-colors">
-          <ChatInput onSendMessage={handleSendMessage} isStreaming={isStreaming || isWaiting} />
+        <div className="fixed bottom-0 left-0 right-0 p-2 sm:p-4 bg-white dark:bg-zinc-950 border-t border-zinc-200 dark:border-zinc-800">
+          <div className="max-w-3xl mx-auto">
+            <ChatInput onSendMessage={handleSendMessage} isStreaming={isStreaming || isWaiting} />
+          </div>
         </div>
       </div>
     </div>
