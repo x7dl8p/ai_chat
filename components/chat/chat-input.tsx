@@ -52,7 +52,7 @@ export function ChatInput({ onSendMessage, isStreaming }: ChatInputProps) {
 
   return (
     <form onSubmit={handleSubmit} className="max-w-3xl mx-auto w-full">
-      <div className="relative w-full rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-3 transition-colors">
+      <div className="relative w-full rounded-xl border border-zinc-200 dark:border-zinc-800 bg-transparent p-3 transition-colors">
         <textarea
           ref={textareaRef}
           placeholder={isStreaming ? "Waiting for response..." : "Ask Anything"}

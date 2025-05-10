@@ -28,7 +28,7 @@ export function Message({ message, isStreaming, isWaiting, streamingContent }: M
     <div className={cn("flex flex-col", message.type === "user" ? "items-end" : "items-start")}>
       <div
         className={cn(
-          "max-w-[80%] px-4 py-2 rounded-2xl",
+          "max-w-[95%] sm:max-w-[80%] px-3 my-2 sm:px-4 py-2 rounded-2xl",
           message.type === "user"
             ? "bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-white rounded-br-none"
             : "bg-zinc-50 dark:bg-zinc-700 text-zinc-900 dark:text-white rounded-bl-none",
@@ -49,7 +49,7 @@ export function Message({ message, isStreaming, isWaiting, streamingContent }: M
                 </button>
 
                 {showThoughts && (
-                  <div className="text-sm text-zinc-700 dark:text-zinc-300 bg-zinc-100 dark:bg-zinc-800 p-2 rounded border border-zinc-200 dark:border-zinc-700 whitespace-pre-wrap transition-colors">
+                  <div className="text-sm text-zinc-700 dark:text-zinc-300 bg-zinc-100 dark:bg-zinc-800 p-2 rounded border border-zinc-200 dark:border-zinc-700 whitespace-pre-wrap break-words transition-colors">
                     {message.thoughtProcess}
                   </div>
                 )}

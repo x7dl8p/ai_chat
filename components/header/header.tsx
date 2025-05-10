@@ -23,7 +23,7 @@ export function Header({ toggleSidebar }: HeaderProps) {
         <button onClick={toggleSidebar} className="p-1.5 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors">
           <PanelLeft size={16} className="text-zinc-600 dark:text-zinc-400" />
         </button>
-        <span className="text-sm font-medium text-zinc-900 dark:text-zinc-50">Ai Chat</span>
+        <span className="text-sm font-medium text-zinc-900 dark:text-zinc-50">Shat Bot</span>
       </div>
 
       <button
