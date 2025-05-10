@@ -1,12 +1,12 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
-import type { ChatHistory } from "@/types"
+import type { ChatHistory, ChatMessage, ChatTab } from "@/types"
 import { isSimpleGreeting } from "@/lib/prompts"
 import { Sidebar } from "@/components/sidebar/sidebar"
 import { Header } from "@/components/header/header"
-import { Tabs, type Tab } from "@/components/tabs/tabs"
-import { Message, type Message as MessageType } from "@/components/chat/message"
+import { Tabs } from "@/components/tabs/tabs"
+import { Message } from "@/components/chat/message"
 import { ChatInput } from "@/components/chat/chat-input"
 import { translateToArabic } from "@/lib/utils"
 import { generateGeminiResponse } from "@/lib/gemini"
@@ -44,11 +44,13 @@ export default function ChatInterface() {
   // State for sidebar
   const [sidebarVisible, setSidebarVisible] = useState(true)
 
-  // State for tabs
-  const [tabs, setTabs] = useState<Tab[]>([{ id: "tab-1", title: "New Chat", active: true }])
-
-  // State for messages
-  const [messages, setMessages] = useState<MessageType[]>([])
+  // State for tabs - using ChatTab type with messages array
+  const [tabs, setTabs] = useState<ChatTab[]>([{ 
+    id: "tab-1", 
+    title: "New Chat", 
+    active: true,
+    messages: [] 
+  }])
 
   // State for streaming
   const [isStreaming, setIsStreaming] = useState(false)
@@ -59,12 +61,17 @@ export default function ChatInterface() {
   const chatContainerRef = useRef<HTMLDivElement>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
+  // Get current active tab and its messages
+  const activeTabIndex = tabs.findIndex(tab => tab.active)
+  const activeTab = activeTabIndex >= 0 ? tabs[activeTabIndex] : tabs[0]
+  const activeMessages = activeTab?.messages || []
+
   // Scroll to bottom when messages change
   useEffect(() => {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: "smooth" })
     }
-  }, [messages, streamingContent])
+  }, [activeMessages, streamingContent])
 
   // Toggle sidebar
   const toggleSidebar = () => {
@@ -80,9 +87,9 @@ export default function ChatInterface() {
           id: `tab-${Date.now()}`,
           title: "New Chat",
           active: true,
+          messages: []
         }),
     )
-    setMessages([])
   }
 
   // Handle close tab
@@ -100,14 +107,9 @@ export default function ChatInterface() {
     }
 
     setTabs(newTabs)
-
-    // If we closed the active tab, reset messages
-    if (isActive) {
-      setMessages([])
-    }
   }
 
-  // Handle select tab
+  // Handle select tab - no need to reset messages since they're stored per tab
   const handleSelectTab = (id: string) => {
     setTabs(
       tabs.map((tab) => ({
@@ -115,10 +117,6 @@ export default function ChatInterface() {
         active: tab.id === id,
       })),
     )
-
-    // In a real app, you would load the messages for this tab
-    // For now, we'll just reset messages
-    setMessages([])
   }
 
   // Handle select chat from sidebar
@@ -160,44 +158,48 @@ export default function ChatInterface() {
     return text
   }
 
-  // Handle send message
+  // Handle send message - now adding messages to the appropriate tab
   const handleSendMessage = async (message: string, mode: ActiveButton) => {
-    // Add user message
+    if (activeTabIndex < 0) return
+
+    // Create user message
     const userMessageId = `user-${Date.now()}`
-    setMessages((prev) => [
-      ...prev,
-      {
-        id: userMessageId,
-        content: message,
-        type: "user",
-      },
-    ])
+    const userMessage: ChatMessage = {
+      id: userMessageId,
+      content: message,
+      type: "user",
+    }
 
     // Create system message placeholder
     const systemMessageId = `system-${Date.now()}`
-    setMessages((prev) => [
-      ...prev,
-      {
-        id: systemMessageId,
-        content: "",
-        type: "system",
-      },
-    ])
+    const systemMessage: ChatMessage = {
+      id: systemMessageId,
+      content: "",
+      type: "system",
+    }
+
+    // Add both messages to the current active tab
+    setTabs(currentTabs => {
+      const newTabs = [...currentTabs]
+      newTabs[activeTabIndex] = {
+        ...newTabs[activeTabIndex],
+        messages: [...newTabs[activeTabIndex].messages, userMessage, systemMessage]
+      }
+      return newTabs
+    })
 
     // Show loading state
     setIsWaiting(true)
 
     // Update tab title if this is the first message
-    if (messages.length === 0) {
+    if (activeMessages.length === 0) {
       setTabs((currentTabs) => {
-        return currentTabs.map((tab) => {
-          if (!tab.active) return tab
-
-          return {
-            ...tab,
-            title: message.slice(0, 20) + (message.length > 20 ? "..." : ""),
-          }
-        })
+        const newTabs = [...currentTabs]
+        newTabs[activeTabIndex] = {
+          ...newTabs[activeTabIndex],
+          title: message.slice(0, 20) + (message.length > 20 ? "..." : ""),
+        }
+        return newTabs
       })
     }
 
@@ -242,18 +244,23 @@ export default function ChatInterface() {
     await simulateTextStreaming(response);
 
     // Update the system message with the full response
-    setMessages((prev) =>
-      prev.map((msg) =>
-        msg.id === systemMessageId
-          ? {
-              ...msg,
-              content: response,
-              completed: true,
-              thoughtProcess: mode === "think" ? thoughtProcess : undefined,
-            }
-          : msg,
-      ),
-    );
+    setTabs(currentTabs => {
+      const newTabs = [...currentTabs]
+      newTabs[activeTabIndex] = {
+        ...newTabs[activeTabIndex],
+        messages: newTabs[activeTabIndex].messages.map(msg =>
+          msg.id === systemMessageId
+            ? {
+                ...msg,
+                content: response,
+                completed: true,
+                thoughtProcess: mode === "think" ? thoughtProcess : undefined,
+              }
+            : msg
+        )
+      }
+      return newTabs
+    })
   }
 
   return (
@@ -272,12 +279,12 @@ export default function ChatInterface() {
         {/* Chat Area */}
         <div ref={chatContainerRef} className="flex-1 overflow-y-auto p-4 scrollbar-hide bg-white dark:bg-zinc-950">
           <div className="max-w-3xl mx-auto space-y-4">
-            {messages.map((message, index) => (
+            {activeMessages.map((message, index) => (
               <Message
                 key={message.id}
                 message={message}
-                isStreaming={isStreaming && index === messages.length - 1}
-                isWaiting={isWaiting && index === messages.length - 1}
+                isStreaming={isStreaming && index === activeMessages.length - 1}
+                isWaiting={isWaiting && index === activeMessages.length - 1}
                 streamingContent={streamingContent}
               />
             ))}

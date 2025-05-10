@@ -20,8 +20,8 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
         <ThemeProvider
-          attribute="data-theme"
-          defaultTheme="system"
+          attribute="class"
+          defaultTheme="dark"
           enableSystem
           disableTransitionOnChange
         >
