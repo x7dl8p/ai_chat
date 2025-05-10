@@ -1,0 +1,63 @@
+"use client"
+
+import { useState } from "react"
+import { ChevronDown, ChevronRight } from "lucide-react"
+import { cn } from "@/lib/utils"
+import { LoadingDots } from "./loading-dots"
+
+export interface Message {
+  id: string
+  content: string
+  type: "user" | "system"
+  completed?: boolean
+  thoughtProcess?: string
+}
+
+interface MessageProps {
+  message: Message
+  isStreaming?: boolean
+  isWaiting?: boolean
+  streamingContent?: string
+}
+
+export function Message({ message, isStreaming, isWaiting, streamingContent }: MessageProps) {
+  const [showThoughts, setShowThoughts] = useState(false)
+  const hasThoughts = message.thoughtProcess && message.thoughtProcess.length > 0
+
+  return (
+    <div className={cn("flex flex-col", message.type === "user" ? "items-end" : "items-start")}>
+      <div
+        className={cn(
+          "max-w-[80%] px-4 py-2 rounded-2xl",
+          message.type === "user" ? "bg-zinc-800 text-white rounded-br-none" : "bg-zinc-700 text-white rounded-bl-none",
+        )}
+      >
+        {message.type === "system" && isWaiting ? (
+          <LoadingDots />
+        ) : (
+          <>
+            {message.type === "system" && hasThoughts && (
+              <div className="mb-3">
+                <button
+                  onClick={() => setShowThoughts(!showThoughts)}
+                  className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-300 mb-1"
+                >
+                  {showThoughts ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+                  <span>Thought Process</span>
+                </button>
+
+                {showThoughts && (
+                  <div className="text-sm text-zinc-300 bg-zinc-800 p-2 rounded border border-zinc-700 whitespace-pre-wrap">
+                    {message.thoughtProcess}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {isStreaming ? streamingContent : message.content}
+          </>
+        )}
+      </div>
+    </div>
+  )
+}
