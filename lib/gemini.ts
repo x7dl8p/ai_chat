@@ -1,61 +1,81 @@
 import { isSimpleGreeting, getGreetingResponse } from "./prompts"
+import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from "@google/generative-ai";
 
-export type GeminiModel = "gemini-2.0-flash-001" | "gemini-2.0-flash-thinking-exp-1219"
+// Updated model names to match the current Gemini API (v1beta)
+export type GeminiModel = "gemini-1.5-pro" | "gemini-1.5-flash";
 
 export interface GeminiOptions {
   model: GeminiModel
   prompt: string
-  thinking?: boolean
-  translate?: boolean
+  thinking?: boolean // This might be deprecated if the model handles "thinking" internally
+  translate?: boolean // This might be deprecated if translation is a specific prompt/model feature
 }
+
+const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
+if (!apiKey) {
+  throw new Error("NEXT_PUBLIC_GEMINI_API_KEY is not set in environment variables.");
+}
+const genAI = new GoogleGenerativeAI(apiKey);
 
 export async function generateGeminiResponse(options: GeminiOptions): Promise<string> {
   // Check if the prompt is a simple greeting
   if (isSimpleGreeting(options.prompt)) {
-    return getGreetingResponse(options.prompt)
+    return getGreetingResponse(options.prompt);
   }
 
-  // This is a placeholder for the Gemini API integration
-  // In a real implementation, you would call the Gemini API with your API key
-  const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY
+  console.log(`Generating response with model: ${options.model}`);
+  // console.log(`Thinking mode: ${options.thinking ? "enabled" : "disabled"}`); // Potentially deprecated
+  // console.log(`Translate mode: ${options.translate ? "enabled" : "disabled"}`); // Potentially deprecated
 
-  console.log(`Using API Key: ${apiKey ? "Available" : "Not available"}`)
-  console.log(`Generating response with model: ${options.model}`)
-  console.log(`Thinking mode: ${options.thinking ? "enabled" : "disabled"}`)
-  console.log(`Translate mode: ${options.translate ? "enabled" : "disabled"}`)
+  try {
+    const model = genAI.getGenerativeModel({
+      model: options.model,
+      // Generation config can be added here if needed, e.g., temperature, topK, topP
+      // safetySettings can be adjusted if needed, for example:
+      safetySettings: [
+        {
+          category: HarmCategory.HARM_CATEGORY_HARASSMENT,
+          threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+        },
+        {
+          category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+          threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+        },
+        {
+          category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
+          threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+        },
+        {
+          category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+          threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+        },
+      ],
+    });
 
-  // Simulate API delay
-  await new Promise((resolve) => setTimeout(resolve, 1000))
+    // For simplicity, directly using the prompt.
+    // For more complex scenarios (like chat history, or specific instructions for thinking/translation),
+    // the prompt might need to be structured differently or use different SDK methods (e.g., startChat).
 
-  if (options.thinking) {
-    return `I'm thinking deeply about "${options.prompt}"... Let me analyze this step by step.
-    
-First, let's consider the key aspects of your question. There are several important elements to address.
+    // The 'thinking' and 'translate' flags are not directly used by the SDK's generateContent method
+    // in the way the placeholder simulated. If these are important features,
+    // they would typically be handled by:
+    // 1. Prompt engineering: Crafting the prompt to ask the model to "think step by step" or "translate the following".
+    // 2. Using specific model capabilities if available for these tasks.
 
-1. The primary concept involves understanding the underlying principles.
-2. We need to examine the historical context and how it evolved over time.
-3. Current research suggests multiple perspectives on this topic.
+    // Example of a simple text generation:
+    const result = await model.generateContent(options.prompt);
+    const response = result.response;
+    const text = response.text();
+    return text;
 
-After careful consideration, I believe the most comprehensive answer would acknowledge both the traditional viewpoint and more recent developments in this field.`
+  } catch (error) {
+    console.error("Error generating response from Gemini API:", error);
+    if (error instanceof Error && error.message.includes("API key not valid")) {
+      return "Error: The Gemini API key is not valid. Please check your .env.local file.";
+    }
+    if (error instanceof Error && error.message.includes("quota")) {
+        return "Error: You have exceeded your Gemini API quota. Please check your Google Cloud console.";
+    }
+    return "Sorry, I encountered an error while trying to generate a response. Please try again later.";
   }
-
-  if (options.translate) {
-    return `Translation of "${options.prompt}":
-    
-French: [French translation would appear here]
-Spanish: [Spanish translation would appear here]
-German: [German translation would appear here]
-Japanese: [Japanese translation would appear here]
-Chinese: [Chinese translation would appear here]`
-  }
-
-  return `Thank you for your message. Here's my response to "${options.prompt}":
-  
-This is an interesting topic that deserves careful consideration. Based on my understanding, there are multiple perspectives to consider. The key points to remember are:
-
-1. Context matters significantly when addressing this question
-2. Recent developments have changed how we think about this
-3. There are practical applications worth exploring
-
-Would you like me to elaborate on any specific aspect of this topic?`
 }
