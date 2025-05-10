@@ -52,11 +52,11 @@ export function ChatInput({ onSendMessage, isStreaming }: ChatInputProps) {
 
   return (
     <form onSubmit={handleSubmit} className="max-w-3xl mx-auto w-full">
-      <div className="relative w-full rounded-xl border border-zinc-800 bg-zinc-900 p-3">
+      <div className="relative w-full rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-3 transition-colors">
         <textarea
           ref={textareaRef}
           placeholder={isStreaming ? "Waiting for response..." : "Ask Anything"}
-          className="min-h-[24px] max-h-[160px] w-full rounded-xl border-0 bg-transparent text-white placeholder:text-zinc-500 focus:outline-none text-base resize-none pb-10"
+          className="min-h-[24px] max-h-[160px] w-full rounded-xl border-0 bg-transparent text-zinc-900 dark:text-white placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:outline-none text-base resize-none pb-10 transition-colors"
           value={inputValue}
           onChange={handleInputChange}
           disabled={isStreaming}
@@ -68,37 +68,46 @@ export function ChatInput({ onSendMessage, isStreaming }: ChatInputProps) {
             <div className="flex items-center gap-2">
               <button
                 type="button"
-                className={cn("p-2 rounded-full", activeButton === "file" ? "bg-zinc-700" : "hover:bg-zinc-800")}
+                className={cn(
+                  "p-2 rounded-full transition-colors",
+                  activeButton === "file"
+                    ? "bg-zinc-100 dark:bg-zinc-700"
+                    : "hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                )}
                 onClick={() => toggleButton("file")}
                 disabled={isStreaming}
               >
-                <Paperclip size={18} className="text-zinc-400" />
+                <Paperclip size={18} className="text-zinc-600 dark:text-zinc-400" />
               </button>
 
               <button
                 type="button"
                 className={cn(
                   "flex items-center gap-1.5 px-3 py-1.5 rounded-full",
-                  activeButton === "translate" ? "bg-zinc-700" : "hover:bg-zinc-800",
+                  activeButton === "translate"
+                    ? "bg-zinc-100 dark:bg-zinc-700"
+                    : "hover:bg-zinc-100 dark:hover:bg-zinc-800",
                 )}
                 onClick={() => toggleButton("translate")}
                 disabled={isStreaming}
               >
-                <Languages size={18} className="text-zinc-400" />
-                <span className="text-sm text-zinc-300">Translate</span>
+                <Languages size={18} className="text-zinc-600 dark:text-zinc-400" />
+                <span className="text-sm text-zinc-700 dark:text-zinc-300">Translate</span>
               </button>
 
               <button
                 type="button"
                 className={cn(
                   "flex items-center gap-1.5 px-3 py-1.5 rounded-full",
-                  activeButton === "think" ? "bg-zinc-700" : "hover:bg-zinc-800",
+                  activeButton === "think"
+                    ? "bg-zinc-100 dark:bg-zinc-700"
+                    : "hover:bg-zinc-100 dark:hover:bg-zinc-800",
                 )}
                 onClick={() => toggleButton("think")}
                 disabled={isStreaming}
               >
-                <Lightbulb size={18} className="text-zinc-400" />
-                <span className="text-sm text-zinc-300">Think</span>
+                <Lightbulb size={18} className="text-zinc-600 dark:text-zinc-400" />
+                <span className="text-sm text-zinc-700 dark:text-zinc-300">Think</span>
               </button>
             </div>
 
@@ -106,12 +115,12 @@ export function ChatInput({ onSendMessage, isStreaming }: ChatInputProps) {
               type="submit"
               className={cn(
                 "p-2 rounded-full",
-                inputValue.trim() ? "bg-zinc-100" : "bg-zinc-800",
+                inputValue.trim() ? "bg-zinc-900 dark:bg-zinc-100" : "bg-zinc-100 dark:bg-zinc-800",
                 isStreaming && "opacity-50 cursor-not-allowed",
               )}
               disabled={!inputValue.trim() || isStreaming}
             >
-              <ArrowUp size={18} className={inputValue.trim() ? "text-zinc-900" : "text-zinc-500"} />
+              <ArrowUp size={18} className={inputValue.trim() ? "text-white dark:text-zinc-900" : "text-zinc-400 dark:text-zinc-500"} />
             </button>
           </div>
         </div>

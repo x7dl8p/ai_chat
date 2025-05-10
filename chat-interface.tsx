@@ -257,7 +257,7 @@ export default function ChatInterface() {
   }
 
   return (
-    <div className="flex h-screen overflow-hidden">
+    <div className="flex h-screen overflow-hidden bg-white dark:bg-zinc-950 transition-colors">
       {/* Sidebar */}
       {sidebarVisible && <Sidebar onSelectChat={handleSelectChat} onNewChat={handleNewTab} />}
 
@@ -270,7 +270,7 @@ export default function ChatInterface() {
         <Tabs tabs={tabs} onNewTab={handleNewTab} onCloseTab={handleCloseTab} onSelectTab={handleSelectTab} />
 
         {/* Chat Area */}
-        <div ref={chatContainerRef} className="flex-1 overflow-y-auto p-4 scrollbar-hide">
+        <div ref={chatContainerRef} className="flex-1 overflow-y-auto p-4 scrollbar-hide bg-white dark:bg-zinc-950">
           <div className="max-w-3xl mx-auto space-y-4">
             {messages.map((message, index) => (
               <Message
@@ -286,7 +286,7 @@ export default function ChatInterface() {
         </div>
 
         {/* Input Area */}
-        <div className="p-4 border-t border-zinc-800">
+        <div className="p-4 border-t border-zinc-200 dark:border-zinc-800 transition-colors">
           <ChatInput onSendMessage={handleSendMessage} isStreaming={isStreaming || isWaiting} />
         </div>
       </div>
